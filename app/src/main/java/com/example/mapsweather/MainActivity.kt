@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
 
     }
 
-    override fun onMapClick(p0: LatLng) {
+    override fun onMapClick(lat: LatLng) {
         val marker = MarkerOptions()
             .position(lat)
         map.addMarker(marker)
