@@ -12,8 +12,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/imageWeather"
+            android:layout_height="150dp"
+            android:contentDescription="Image weather" />
+
         <TextView
             android:id="@+id/temperature"
+            android:layout_below="@id/imageWeather"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"

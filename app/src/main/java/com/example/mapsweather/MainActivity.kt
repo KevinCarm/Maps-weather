@@ -1,10 +1,11 @@
 package com.example.mapsweather
 
+import android.graphics.BitmapFactory
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.mapsweather.data.model.WeatherMain
@@ -15,10 +16,14 @@ import com.google.android.gms.maps.GoogleMap.OnMapClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.InputStream
+import java.net.URL
 import java.util.*
 
 
@@ -68,22 +73,42 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
         )
     }
 
+    private fun formatTwoDecimals(value: Double): Double {
+        val string = "%.2f"
+        return string.format(value).toDouble()
+    }
+
     private fun createDialog(weather: WeatherMain) {
         val inflate = layoutInflater
-        val inflate_view = inflate.inflate(R.layout.show_weather, null)
-        val cityText: TextView = inflate_view.findViewById(R.id.city)
-        val stateText: TextView = inflate_view.findViewById(R.id.state)
-        val countryText: TextView = inflate_view.findViewById(R.id.country)
-        val temperature: TextView = inflate_view.findViewById(R.id.temperature)
+        val inflateView = inflate.inflate(R.layout.show_weather, null)
+        val cityText: TextView = inflateView.findViewById(R.id.city)
+        val stateText: TextView = inflateView.findViewById(R.id.state)
+        val countryText: TextView = inflateView.findViewById(R.id.country)
+        val temperature: TextView = inflateView.findViewById(R.id.temperature)
+        val imageWeather: ImageView = inflateView.findViewById(R.id.imageWeather)
 
         cityText.text = city
         stateText.text = state
         countryText.text = country
-        temperature.text = "%.2f".format((weather.main.temp - kelvin)).toDouble().toString().plus("°C")
+        temperature.text = formatTwoDecimals((weather.main.temp - kelvin)).toString().plus("°C")
+
+
+        try {
+            val url = "https://openweathermap.org/img/wn/${weather.weather[0].icon}@4x.png"
+            CoroutineScope(Dispatchers.IO).launch {
+                val bitmap =
+                    BitmapFactory.decodeStream(URL(url).content as InputStream)
+                withContext(Dispatchers.Main) {
+                    imageWeather.setImageBitmap(bitmap)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
 
         MaterialAlertDialogBuilder(this)
-            .setView(inflate_view)
+            .setView(inflateView)
             .setPositiveButton("Done") { _, _ -> }
             .show()
     }
