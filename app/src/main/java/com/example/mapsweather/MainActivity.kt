@@ -18,6 +18,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,18 +80,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
     }
 
     private fun createDialog(weather: WeatherMain) {
+        println("------->")
+        println(Gson().toJson(weather))
         val inflate = layoutInflater
         val inflateView = inflate.inflate(R.layout.show_weather, null)
         val cityText: TextView = inflateView.findViewById(R.id.city)
-        val stateText: TextView = inflateView.findViewById(R.id.state)
-        val countryText: TextView = inflateView.findViewById(R.id.country)
         val temperature: TextView = inflateView.findViewById(R.id.temperature)
         val imageWeather: ImageView = inflateView.findViewById(R.id.imageWeather)
+        val description: TextView = inflateView.findViewById(R.id.description)
+        val humidity: TextView = inflateView.findViewById(R.id.humidity)
+        val maximum: TextView = inflateView.findViewById(R.id.maximum)
+        val minimum: TextView = inflateView.findViewById(R.id.minimum)
 
-        cityText.text = city
-        stateText.text = state
-        countryText.text = country
+        cityText.text = city.plus(", ").plus(country)
+        description.text = weather.weather[0].description
         temperature.text = formatTwoDecimals((weather.main.temp - kelvin)).toString().plus("°C")
+        humidity.text = weather.main.humidity.toString().plus("%")
+        maximum.text = formatTwoDecimals(weather.main.temp_max - kelvin).toString().plus("°C")
+        minimum.text = formatTwoDecimals(weather.main.temp_min - kelvin).toString().plus("°C")
 
 
         try {
@@ -109,7 +116,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
 
         MaterialAlertDialogBuilder(this)
             .setView(inflateView)
-            .setPositiveButton("Done") { _, _ -> }
             .show()
     }
 
