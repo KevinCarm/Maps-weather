@@ -18,14 +18,13 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.URL
-import java.util.*
+import java.util.Locale
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener {
@@ -47,7 +46,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
         model.getWeather().observe(this) { response ->
             createDialog(response)
         }
-
     }
 
     private fun createFragment() {
@@ -80,8 +78,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
     }
 
     private fun createDialog(weather: WeatherMain) {
-        println("------->")
-        println(Gson().toJson(weather))
         val inflate = layoutInflater
         val inflateView = inflate.inflate(R.layout.show_weather, null)
         val cityText: TextView = inflateView.findViewById(R.id.city)
@@ -108,15 +104,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
                 withContext(Dispatchers.Main) {
                     imageWeather.setImageBitmap(bitmap)
                 }
+            }.invokeOnCompletion {
+                CoroutineScope(Dispatchers.Main).launch {
+                    MaterialAlertDialogBuilder(this@MainActivity)
+                        .setView(inflateView)
+                        .show()
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-
-        MaterialAlertDialogBuilder(this)
-            .setView(inflateView)
-            .show()
     }
 
     override fun onMapClick(lat: LatLng) {
@@ -124,25 +122,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnMapClickListener
 
         marker = MarkerOptions().position(lat)
         map.addMarker(marker!!)
-        map.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(lat, 10f),
-            4000,
-            null
-        )
-
-        val geocoder = Geocoder(this, Locale.getDefault())
-        val addresses: List<Address> =
-            geocoder.getFromLocation(marker?.position!!.latitude, marker?.position!!.longitude, 1)
-
-        model.getWeatherByLocation(
-            marker?.position!!.latitude,
-            marker?.position!!.longitude,
-            "29506a12ba108d822f46afefe72ccccc"
-        )
-
-        city = addresses[0].locality
-        state = addresses[0].adminArea
-        country = addresses[0].countryName
+       CoroutineScope(Dispatchers.Main).launch {
+           map.animateCamera(
+               CameraUpdateFactory.newLatLngZoom(lat, 10f),
+               1000,
+               null
+           )
+       }.invokeOnCompletion {
+           val geocoder = Geocoder(this, Locale.getDefault())
+           try {
+               val addresses: List<Address> =
+                   geocoder.getFromLocation(marker?.position!!.latitude, marker?.position!!.longitude, 1)
+               model.getWeatherByLocation(
+                   marker?.position!!.latitude,
+                   marker?.position!!.longitude,
+                   getString(R.string.api_key)
+               )
+               city = addresses[0].locality
+               state = addresses[0].adminArea
+               country = addresses[0].countryName
+           } catch (e: Exception) {
+               e.printStackTrace()
+           }
+       }
     }
-
 }
